@@ -1,0 +1,41 @@
+
+version: '3.8'
+
+networks:
+  url_shortener_net:
+    driver: bridge
+services:
+  app:
+    container_name: url_shortener_api
+    build: .
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    networks:
+      - url_shortener_net
+    environment:
+      - DB_HOST=db
+      - DB_TYPE=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=admin
+      - DB_NAME=shortener
+      - JWT_SECRET=uh8wjsd990nsha
+
+  db:
+    container_name: database_postgres
+    image: postgres:15-alpine
+    networks:
+      - url_shortener_net
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=shortener
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

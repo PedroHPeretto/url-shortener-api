@@ -16,6 +16,6 @@ WORKDIR /usr/src/app
 COPY --from=builder /usr/src/app/dist ./dist
 COPY --from=builder /usr/src/app/package*.json ./
 
-RUN npm ci --only=production
+RUN npm ci --only=production --ignore-scripts
 
-CMD ["node", "dist/main"]
+CMD ["node", "dist/src/main.js"]
