@@ -6,15 +6,20 @@ import { CreateUrlDto } from './dto/create-url.dto';
 import { nanoid } from 'nanoid';
 import { User } from '../users/entities/user.entity';
 import { UpdateUrlDto } from './dto/update-url.dto';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class UrlsService {
   private readonly logger = new Logger(UrlsService.name);
+  private readonly baseUrl: string;
 
   constructor(
     @InjectRepository(Url)
     private readonly urlRepository: Repository<Url>,
-  ) {}
+    private readonly configService: ConfigService,
+  ) {
+    this.baseUrl = this.configService.getOrThrow<string>('BASE_URL');
+  }
 
   async generateUniqueShortCode(): Promise<string> {
     const code = nanoid(6);
@@ -42,7 +47,7 @@ export class UrlsService {
 
     return {
       ...newUrl,
-      short_url: `http://localhost:3000/${short_code}`,
+      short_url: `${this.baseUrl}${short_code}`,
     };
   }
 
@@ -60,6 +65,15 @@ export class UrlsService {
       .catch((err) => {
         this.logger.error('Falha ao contabilizar clique:', err);
       });
+
+    let { original_url } = url;
+
+    if (
+      !original_url.startsWith('http://') &&
+      !original_url.startsWith('https://')
+    ) {
+      original_url = `https://${original_url}`;
+    }
 
     return url.original_url;
   }

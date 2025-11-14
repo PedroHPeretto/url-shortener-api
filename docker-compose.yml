@@ -22,6 +22,7 @@ services:
       - DB_PASSWORD=admin
       - DB_NAME=shortener
       - JWT_SECRET=uh8wjsd990nsha
+      - BASE_URL=http://localhost:3000/
 
   db:
     container_name: database_postgres
