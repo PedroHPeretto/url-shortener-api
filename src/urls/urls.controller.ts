@@ -3,40 +3,46 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
-  Delete,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
+  NotFoundException,
+  Redirect,
 } from '@nestjs/common';
 import { UrlsService } from './urls.service';
 import { CreateUrlDto } from './dto/create-url.dto';
-import { UpdateUrlDto } from './dto/update-url.dto';
+import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt.guard';
+import { GetUser } from '../auth/decorators/get-user.decorator';
+import { User } from '../users/entities/user.entity';
 
-@Controller('urls')
+@Controller()
 export class UrlsController {
   constructor(private readonly urlsService: UrlsService) {}
 
   @Post()
-  create(@Body() createUrlDto: CreateUrlDto) {
-    return this.urlsService.create(createUrlDto);
+  @UseGuards(OptionalJwtAuthGuard)
+  @HttpCode(HttpStatus.CREATED)
+  async shortenUrl(
+    @Body() createUrlDto: CreateUrlDto,
+    @GetUser('user') user: User,
+  ) {
+    return this.urlsService.shortenUrl(createUrlDto, user);
   }
 
-  @Get()
-  findAll() {
-    return this.urlsService.findAll();
-  }
+  @Get(':short_code')
+  @Redirect()
+  async redirect(@Param('short_code') short_code: string) {
+    const originalUrl =
+      await this.urlsService.findOriginalUrlAndCountClick(short_code);
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.urlsService.findOne(+id);
-  }
+    if (!originalUrl) {
+      throw new NotFoundException('Url não encontrada ou expirada');
+    }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUrlDto: UpdateUrlDto) {
-    return this.urlsService.update(+id, updateUrlDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.urlsService.remove(+id);
+    return {
+      url: originalUrl,
+      statusCode: HttpStatus.FOUND,
+    };
   }
 }
