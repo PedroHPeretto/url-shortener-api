@@ -52,7 +52,7 @@ export class UrlsController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get('my-links')
+  @Get('my-links/links')
   async getUserLinks(@GetUser('user') user: User): Promise<Url[]> {
     const userId = user.id;
 
