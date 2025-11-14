@@ -9,9 +9,9 @@ import {
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { AuthGuard } from '@nestjs/passport';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { User } from './entities/user.entity';
+import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 
 @Controller('users')
 export class UsersController {
@@ -22,14 +22,14 @@ export class UsersController {
     return this.usersService.create(createUserDto);
   }
 
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(JwtAuthGuard)
   @Patch()
   update(@GetUser('user') user: User, @Body() updateUserDto: UpdateUserDto) {
     const id = user.id;
     return this.usersService.update(id, updateUserDto);
   }
 
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(JwtAuthGuard)
   @Delete()
   remove(@GetUser('user') user: User) {
     const id = user.id;
