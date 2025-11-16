@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ConflictException,
   InternalServerErrorException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -15,6 +16,8 @@ import { AUTH_CONSTANTS } from '../auth/constants/auth.constants';
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
@@ -22,15 +25,18 @@ export class UsersService {
   async create(createUserDto: CreateUserDto): Promise<User> {
     const existingUser = await this.findByEmail(createUserDto.email);
     if (existingUser) {
-      throw new ConflictException('Email já está registrado');
+      this.logger.warn(`Email provided already in use: ${createUserDto.email}`);
+      throw new ConflictException('Email provided already in use');
     }
 
     const user = this.userRepository.create(createUserDto);
 
+    this.logger.log(`User: ${user.id} created successfully`);
     return this.userRepository.save(user);
   }
 
   async findByEmail(email: string): Promise<User | null> {
+    this.logger.log(`User email: ${email} searched successfully`);
     return this.userRepository.findOne({ where: { email } });
   }
 
@@ -40,7 +46,8 @@ export class UsersService {
   ): Promise<UserResponse> {
     const userExists = await this.userRepository.findOne({ where: { id } });
     if (!userExists) {
-      throw new NotFoundException(`Usuário com ID ${id} não encontrado`);
+      this.logger.warn(`User: ${id} not found`);
+      throw new NotFoundException(`User: ${id} not found`);
     }
 
     const updateData = { ...updateUserDto };
@@ -51,7 +58,8 @@ export class UsersService {
           AUTH_CONSTANTS.BCRYPT_SALT_ROUNDS,
         );
       } catch {
-        throw new InternalServerErrorException('Falha ao processar senha');
+        this.logger.error(`Failed to update user information`);
+        throw new InternalServerErrorException('Failed to proccess password');
       }
     }
 
@@ -61,13 +69,15 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new NotFoundException('Usuário não encontrado');
+      this.logger.warn(`User: ${id} not found`);
+      throw new NotFoundException('User not found');
     }
 
     const savedUser = await this.userRepository.save(user);
 
     const { password: _, ...result } = savedUser;
 
+    this.logger.log(`User: ${savedUser.id} updated successfully`);
     return result;
   }
 
@@ -75,7 +85,8 @@ export class UsersService {
     const result = await this.userRepository.softDelete(id);
 
     if (result.affected === 0) {
-      throw new NotFoundException('Usuário não encontrado');
+      this.logger.warn(`User: ${id} could not be deleted`);
+      throw new NotFoundException('User not found');
     }
   }
 }
