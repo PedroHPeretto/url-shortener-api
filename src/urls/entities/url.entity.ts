@@ -38,5 +38,5 @@ export class Url {
   updated_at: Date;
 
   @DeleteDateColumn()
-  deleted_at: Date;
+  deleted_at: Date | null;
 }
