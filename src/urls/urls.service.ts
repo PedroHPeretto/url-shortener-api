@@ -39,24 +39,27 @@ export class UrlsService {
       const existing = await this.urlRepository.findOneBy({ short_code: code });
 
       if (!existing) {
+        this.logger.log(`Short url created successfully`);
         return code;
       }
 
       this.logger.warn(
-        `Colisão de short codes detectada (attempt ${attempt}): ${code}`,
+        `Short code collision detected (attempt ${attempt}): ${code}`,
       );
     }
 
     throw new InternalServerErrorException(
-      'Falha ao gerar código único após múltiplas tentativas. Tente novamente.',
+      'Failed to generate a short code after multiples tries. Try again in a moment',
     );
   }
 
   private isValidUrl(url: string): boolean {
     try {
       new URL(url.startsWith('http') ? url : `https://${url}`);
+      this.logger.log(`Url provided is valid`);
       return true;
     } catch {
+      this.logger.warn(`Url provided is invalid`);
       return false;
     }
   }
@@ -65,7 +68,8 @@ export class UrlsService {
     const { original_url } = createUrlDto;
 
     if (!this.isValidUrl(original_url)) {
-      throw new BadRequestException('URL fornecida é inválida');
+      this.logger.warn(`Url provided is invalid`);
+      throw new BadRequestException('Url provided is invalid');
     }
 
     const short_code = await this.generateUniqueShortCode();
@@ -78,6 +82,7 @@ export class UrlsService {
 
     await this.urlRepository.save(newUrl);
 
+    this.logger.log(`Shortened url generated successfully`);
     return {
       ...newUrl,
       short_url: `${this.baseUrl}/${short_code}`,
@@ -90,13 +95,14 @@ export class UrlsService {
     });
 
     if (!url) {
+      this.logger.warn(`Could not find original url from: ${short_code}`);
       return null;
     }
 
     try {
       await this.urlRepository.increment({ id: url.id }, 'click_count', 1);
     } catch (error) {
-      this.logger.error('Falha ao contabilizar clique:', error);
+      this.logger.error('Failed to count click:', error);
     }
 
     let { original_url } = url;
@@ -108,10 +114,12 @@ export class UrlsService {
       original_url = `${URLS_CONSTANTS.DEFAULT_PROTOCOL}://${original_url}`;
     }
 
+    this.logger.log(`Original url returned successfully`);
     return original_url;
   }
 
   async findAllByUser(userId: string): Promise<Url[]> {
+    this.logger.log(`Urls from user: ${userId} returned successfully`);
     return this.urlRepository.find({
       where: {
         user_id: userId,
@@ -133,13 +141,13 @@ export class UrlsService {
     });
 
     if (!url) {
-      throw new NotFoundException(
-        'Url não encontrada ou sua permissão foi negada',
-      );
+      this.logger.warn(`Url: ${id} not found`);
+      throw new NotFoundException('Url not found or permission denied');
     }
 
     url.original_url = updateUrlDto.original_url;
 
+    this.logger.log(`Url: ${id} updated successfully`);
     return this.urlRepository.save(url);
   }
 
@@ -150,9 +158,8 @@ export class UrlsService {
     });
 
     if (!url) {
-      throw new NotFoundException(
-        'Url não encontrada ou sua permissão foi negada',
-      );
+      this.logger.warn(`Url: ${id} not found`);
+      throw new NotFoundException('Url not found or permission denied');
     }
 
     await this.urlRepository.softDelete(id);
