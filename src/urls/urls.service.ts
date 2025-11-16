@@ -18,18 +18,26 @@ export class UrlsService {
     private readonly urlRepository: Repository<Url>,
     private readonly configService: ConfigService,
   ) {
-    this.baseUrl = this.configService.getOrThrow<string>('BASE_URL');
+    const configured = this.configService.get<string>('BASE_URL');
+    this.baseUrl = configured ? configured.replace(/\/+$/, '') : '';
   }
 
   async generateUniqueShortCode(): Promise<string> {
-    const code = nanoid(6);
-    const existing = await this.urlRepository.findOneBy({ short_code: code });
+    const maxAttempts = 5;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const code = nanoid(6);
+      const existing = await this.urlRepository.findOneBy({ short_code: code });
 
-    if (existing) {
-      this.logger.warn(`Colisão de short codes detectada: ${code}`);
+      if (!existing) {
+        return code;
+      }
+
+      this.logger.warn(
+        `Colisão de short codes detectada (attempt ${attempt}): ${code}`,
+      );
     }
 
-    return code;
+    return nanoid(6);
   }
 
   async shortenUrl(createUrlDto: CreateUrlDto, user?: User) {
@@ -47,7 +55,7 @@ export class UrlsService {
 
     return {
       ...newUrl,
-      short_url: `${this.baseUrl}${short_code}`,
+      short_url: `${this.baseUrl}/${short_code}`,
     };
   }
 
@@ -75,7 +83,7 @@ export class UrlsService {
       original_url = `https://${original_url}`;
     }
 
-    return url.original_url;
+    return original_url;
   }
 
   async findAllByUser(userId: string): Promise<Url[]> {
