@@ -8,6 +8,7 @@ import { JwtService } from '@nestjs/jwt';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto';
+import { AUTH_CONSTANTS } from './constants/auth.constants';
 
 @Injectable()
 export class AuthService {
@@ -24,10 +25,9 @@ export class AuthService {
       throw new ConflictException('O e-mail fornecido já está em uso.');
     }
 
-    const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(
       createUserDto.password,
-      saltRounds,
+      AUTH_CONSTANTS.BCRYPT_SALT_ROUNDS,
     );
 
     const user = await this.usersService.create({

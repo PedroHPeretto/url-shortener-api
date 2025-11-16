@@ -6,7 +6,11 @@ import { ConfigService } from '@nestjs/config';
 import { nanoid } from 'nanoid';
 import { CreateUrlDto } from './dto/create-url.dto';
 import { UpdateUrlDto } from './dto/update-url.dto';
-import { NotFoundException } from '@nestjs/common';
+import {
+  NotFoundException,
+  InternalServerErrorException,
+  BadRequestException,
+} from '@nestjs/common';
 import {
   createMockRepository,
   MockRepository,
@@ -160,6 +164,35 @@ describe('UrlsService', () => {
 
       expect(error).toBeInstanceOf(Error);
       expect((error as Error).message).toBe('Database error');
+    });
+
+    it('should throw BadRequestException for invalid URL', async () => {
+      const invalidUrlDto: CreateUrlDto = {
+        original_url: 'not a valid url at all',
+      };
+
+      const error = await service
+        .shortenUrl(invalidUrlDto)
+        .catch((e: Error) => e);
+
+      expect(error).toBeInstanceOf(BadRequestException);
+      expect((error as Error).message).toBe('URL fornecida é inválida');
+      expect(mockUrlRepository.create).not.toHaveBeenCalled();
+    });
+
+    it('should throw InternalServerErrorException on unique code generation failure', async () => {
+      const mockCode = 'abcdef';
+      (nanoid as jest.Mock).mockReturnValue(mockCode);
+      (mockUrlRepository.findOneBy as jest.Mock).mockResolvedValue({
+        id: 'existing-url',
+      });
+
+      const error = await service
+        .shortenUrl(createUrlDto)
+        .catch((e: Error) => e);
+
+      expect(error).toBeInstanceOf(InternalServerErrorException);
+      expect((error as Error).message).toContain('Falha ao gerar código único');
     });
   });
 

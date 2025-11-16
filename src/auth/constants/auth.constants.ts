@@ -1,0 +1,5 @@
+export const AUTH_CONSTANTS = {
+  BCRYPT_SALT_ROUNDS: 10,
+  JWT_EXPIRATION: '24h',
+  PASSWORD_MIN_LENGTH: 8,
+} as const;

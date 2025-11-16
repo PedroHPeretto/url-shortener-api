@@ -1,4 +1,10 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  InternalServerErrorException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Url } from './entities/url.entity';
@@ -7,6 +13,7 @@ import { nanoid } from 'nanoid';
 import { User } from '../users/entities/user.entity';
 import { UpdateUrlDto } from './dto/update-url.dto';
 import { ConfigService } from '@nestjs/config';
+import { URLS_CONSTANTS } from './constants/urls.constants';
 
 @Injectable()
 export class UrlsService {
@@ -23,9 +30,12 @@ export class UrlsService {
   }
 
   async generateUniqueShortCode(): Promise<string> {
-    const maxAttempts = 5;
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      const code = nanoid(6);
+    for (
+      let attempt = 1;
+      attempt <= URLS_CONSTANTS.GENERATE_UNIQUE_SHORT_CODE_MAX_ATTEMPTS;
+      attempt++
+    ) {
+      const code = nanoid(URLS_CONSTANTS.SHORT_CODE_LENGTH);
       const existing = await this.urlRepository.findOneBy({ short_code: code });
 
       if (!existing) {
@@ -37,11 +47,26 @@ export class UrlsService {
       );
     }
 
-    return nanoid(6);
+    throw new InternalServerErrorException(
+      'Falha ao gerar código único após múltiplas tentativas. Tente novamente.',
+    );
+  }
+
+  private isValidUrl(url: string): boolean {
+    try {
+      new URL(url.startsWith('http') ? url : `https://${url}`);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   async shortenUrl(createUrlDto: CreateUrlDto, user?: User) {
     const { original_url } = createUrlDto;
+
+    if (!this.isValidUrl(original_url)) {
+      throw new BadRequestException('URL fornecida é inválida');
+    }
 
     const short_code = await this.generateUniqueShortCode();
 
@@ -68,11 +93,11 @@ export class UrlsService {
       return null;
     }
 
-    void this.urlRepository
-      .increment({ id: url.id }, 'click_count', 1)
-      .catch((err) => {
-        this.logger.error('Falha ao contabilizar clique:', err);
-      });
+    try {
+      await this.urlRepository.increment({ id: url.id }, 'click_count', 1);
+    } catch (error) {
+      this.logger.error('Falha ao contabilizar clique:', error);
+    }
 
     let { original_url } = url;
 
@@ -80,7 +105,7 @@ export class UrlsService {
       !original_url.startsWith('http://') &&
       !original_url.startsWith('https://')
     ) {
-      original_url = `https://${original_url}`;
+      original_url = `${URLS_CONSTANTS.DEFAULT_PROTOCOL}://${original_url}`;
     }
 
     return original_url;

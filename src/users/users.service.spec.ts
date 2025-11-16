@@ -4,7 +4,11 @@ import { User } from './entities/user.entity';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { NotFoundException } from '@nestjs/common';
+import {
+  NotFoundException,
+  ConflictException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import {
   createMockRepository,
@@ -57,6 +61,7 @@ describe('UsersService', () => {
       };
       const mockUser = createMockUser(createUserDto);
 
+      (mockUserRepository.findOne as jest.Mock).mockResolvedValue(null);
       (mockUserRepository.create as jest.Mock).mockReturnValue(mockUser);
       (mockUserRepository.save as jest.Mock).mockResolvedValue(mockUser);
 
@@ -67,12 +72,29 @@ describe('UsersService', () => {
       expect(result).toEqual(mockUser);
     });
 
+    it('should throw ConflictException if email already exists', async () => {
+      const createUserDto: CreateUserDto = {
+        email: 'teste@example.com',
+        password: 'password123',
+      };
+      const existingUser = createMockUser(createUserDto);
+
+      (mockUserRepository.findOne as jest.Mock).mockResolvedValue(existingUser);
+
+      const error = await service.create(createUserDto).catch((e: Error) => e);
+
+      expect(error).toBeInstanceOf(ConflictException);
+      expect((error as Error).message).toBe('Email já está registrado');
+      expect(mockUserRepository.create).not.toHaveBeenCalled();
+    });
+
     it('should handle create repository error', async () => {
       const createUserDto: CreateUserDto = {
         email: 'test@example.com',
         password: 'password123',
       };
 
+      (mockUserRepository.findOne as jest.Mock).mockResolvedValue(null);
       (mockUserRepository.create as jest.Mock).mockReturnValue({});
       (mockUserRepository.save as jest.Mock).mockRejectedValue(
         new Error('Database error'),
@@ -131,6 +153,7 @@ describe('UsersService', () => {
         email: updateUserDto.email,
       });
 
+      (mockUserRepository.findOne as jest.Mock).mockResolvedValue(baseUser);
       (mockUserRepository.preload as jest.Mock).mockResolvedValue(updatedUser);
       (mockUserRepository.save as jest.Mock).mockResolvedValue(updatedUser);
 
@@ -156,6 +179,7 @@ describe('UsersService', () => {
         password: hashedPassword,
       });
 
+      (mockUserRepository.findOne as jest.Mock).mockResolvedValue(baseUser);
       (bcrypt.hash as jest.Mock).mockResolvedValue(hashedPassword);
       (mockUserRepository.preload as jest.Mock).mockResolvedValue(updatedUser);
       (mockUserRepository.save as jest.Mock).mockResolvedValue(updatedUser);
@@ -174,38 +198,42 @@ describe('UsersService', () => {
       const updateUserDto: UpdateUserDto = {
         email: 'newemail@example.com',
       };
-      (mockUserRepository.preload as jest.Mock).mockResolvedValue(null);
+      (mockUserRepository.findOne as jest.Mock).mockResolvedValue(null);
 
       const error = await service
         .update('nonexistent-id', updateUserDto)
         .catch((e: Error) => e);
 
       expect(error).toBeInstanceOf(NotFoundException);
-      expect((error as Error).message).toBe('Usuário não encontrado');
+      expect((error as Error).message).toContain('não encontrado');
     });
 
     it('should handle password hash error', async () => {
       const userId = 'user-uuid';
       const updateUserDto: UpdateUserDto = { password: 'newpass' };
+      const baseUser = createMockUser({ id: userId });
 
+      (mockUserRepository.findOne as jest.Mock).mockResolvedValue(baseUser);
       (bcrypt.hash as jest.Mock).mockRejectedValue(new Error('Hash failed'));
 
       const error = await service
         .update(userId, updateUserDto)
         .catch((e: Error) => e);
 
-      expect(error).toBeInstanceOf(Error);
-      expect((error as Error).message).toBe('Hash failed');
+      expect(error).toBeInstanceOf(InternalServerErrorException);
+      expect((error as Error).message).toBe('Falha ao processar senha');
     });
 
     it('should not hash password if not provided in update', async () => {
       const userId = 'user-uuid';
       const updateUserDto: UpdateUserDto = { email: 'new@example.com' };
+      const baseUser = createMockUser({ id: userId });
       const updatedUser = createMockUser({
         id: userId,
         email: updateUserDto.email,
       });
 
+      (mockUserRepository.findOne as jest.Mock).mockResolvedValue(baseUser);
       (mockUserRepository.preload as jest.Mock).mockResolvedValue(updatedUser);
       (mockUserRepository.save as jest.Mock).mockResolvedValue(updatedUser);
 
