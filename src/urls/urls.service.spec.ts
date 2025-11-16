@@ -3,16 +3,20 @@ import { UrlsService } from './urls.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Url } from './entities/url.entity';
 import { ConfigService } from '@nestjs/config';
-import { Repository } from 'typeorm';
+import { Repository, ObjectLiteral } from 'typeorm';
 import { nanoid } from 'nanoid';
 import { User } from '../users/entities/user.entity';
 import { CreateUrlDto } from './dto/create-url.dto';
+import { UpdateUrlDto } from './dto/update-url.dto';
+import { NotFoundException } from '@nestjs/common';
 
 jest.mock('nanoid', () => ({
   nanoid: jest.fn(),
 }));
 
-type MockRepository<T = any> = Partial<Record<keyof Repository<T>, jest.Mock>>;
+type MockRepository<T extends ObjectLiteral> = Partial<
+  Record<keyof Repository<T>, jest.Mock>
+>;
 
 const mockUser: User = { id: 'user-uuid' } as User;
 
@@ -41,6 +45,9 @@ describe('UrlsService', () => {
     getOrThrow: jest.fn(),
     get: jest.fn(),
   };
+
+  const userId = 'user-uuid';
+  const urlId = 'url-uuid';
 
   beforeEach(async () => {
     Object.values(mockRepositoryFactory).forEach((mock) => mock.mockClear());
@@ -166,6 +173,91 @@ describe('UrlsService', () => {
 
       expect(result).toBeNull();
       expect(mockUrlRepository.increment).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('findAllByUser', () => {
+    it('Should return an array of urls for a user', async () => {
+      const mockUrls = [mockUrl, { ...mockUrl, id: 'url-uuid-2' }];
+
+      (mockUrlRepository.find as jest.Mock).mockResolvedValue(mockUrls);
+
+      const result = await service.findAllByUser(userId);
+
+      expect(mockUrlRepository.find).toHaveBeenCalledWith({
+        where: {
+          user_id: userId,
+        },
+        order: {
+          created_at: 'DESC',
+        },
+      });
+      expect(result).toEqual(mockUrls);
+    });
+  });
+
+  describe('update', () => {
+    const updateUrlDto: UpdateUrlDto = { original_url: 'https://youtube.com' };
+
+    it('Should update a url successfully', async () => {
+      const updatableUrl: Url = {
+        ...mockUrl,
+        original_url: 'https://google.com',
+      };
+
+      (mockUrlRepository.findOneBy as jest.Mock).mockResolvedValue(
+        updatableUrl,
+      );
+      (mockUrlRepository.save as jest.Mock).mockResolvedValue({
+        ...updatableUrl,
+        ...updateUrlDto,
+      });
+
+      const result = await service.update(updateUrlDto, userId, urlId);
+
+      expect(mockUrlRepository.findOneBy).toHaveBeenCalledWith({
+        id: urlId,
+        user_id: userId,
+      });
+      expect(mockUrlRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: urlId,
+          original_url: updateUrlDto.original_url,
+        }),
+      );
+      expect(result.original_url).toEqual(updateUrlDto.original_url);
+    });
+
+    it('Should throw NotFoundException if url was not found or belongs to another user', async () => {
+      (mockUrlRepository.findOneBy as jest.Mock).mockResolvedValue(null);
+
+      await expect(service.update(updateUrlDto, userId, urlId)).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(mockUrlRepository.save).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('softDelete', () => {
+    it('Should soft delete a url successfully', async () => {
+      (mockUrlRepository.findOneBy as jest.Mock).mockResolvedValue(mockUrl);
+
+      await service.delete(urlId, userId);
+
+      expect(mockUrlRepository.findOneBy).toHaveBeenCalledWith({
+        id: urlId,
+        user_id: userId,
+      });
+      expect(mockUrlRepository.softDelete).toHaveBeenCalledWith(urlId);
+    });
+
+    it('Should throw NotFoundException if url was not found or belongs to another user', async () => {
+      (mockUrlRepository.findOneBy as jest.Mock).mockResolvedValue(null);
+
+      await expect(service.delete(urlId, userId)).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(mockUrlRepository.softDelete).not.toHaveBeenCalled();
     });
   });
 });
