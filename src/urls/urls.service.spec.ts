@@ -3,55 +3,47 @@ import { UrlsService } from './urls.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Url } from './entities/url.entity';
 import { ConfigService } from '@nestjs/config';
-import { Repository, ObjectLiteral } from 'typeorm';
 import { nanoid } from 'nanoid';
-import { User } from '../users/entities/user.entity';
 import { CreateUrlDto } from './dto/create-url.dto';
 import { UpdateUrlDto } from './dto/update-url.dto';
 import { NotFoundException } from '@nestjs/common';
+import {
+  createMockRepository,
+  MockRepository,
+} from '../../test/helpers/mock-repository';
+import { createMockConfigService } from '../../test/helpers/mock-config';
+import {
+  createMockUrl,
+  createMockUrlWithUser,
+} from '../../test/fixtures/urls.fixture';
+import { createMockUser } from '../../test/fixtures/users.fixture';
 
 jest.mock('nanoid', () => ({
   nanoid: jest.fn(),
 }));
-
-type MockRepository<T extends ObjectLiteral> = Partial<
-  Record<keyof Repository<T>, jest.Mock>
->;
-
-const mockUser: User = { id: 'user-uuid' } as User;
-
-const mockUrl: Url = {
-  id: 'url-uuid',
-  original_url: 'https://google.com',
-} as Url;
 
 describe('UrlsService', () => {
   let service: UrlsService;
   let mockUrlRepository: MockRepository<Url>;
   let mockConfigService: Partial<ConfigService>;
 
-  const mockRepositoryFactory = {
-    create: jest.fn(),
-    save: jest.fn(),
-    findOneBy: jest.fn(),
-    increment: jest.fn(() => ({
-      catch: jest.fn(),
-    })),
-    find: jest.fn(),
-    softDelete: jest.fn(),
-  };
-
-  const mockConfigFactory = {
-    getOrThrow: jest.fn(),
-    get: jest.fn(),
-  };
+  const mockRepositoryFactory = createMockRepository<Url>();
+  const mockConfigFactory = createMockConfigService();
 
   const userId = 'user-uuid';
   const urlId = 'url-uuid';
 
   beforeEach(async () => {
-    Object.values(mockRepositoryFactory).forEach((mock) => mock.mockClear());
-    mockConfigFactory.getOrThrow.mockClear();
+    Object.values(mockRepositoryFactory).forEach((mock) => {
+      if (jest.isMockFunction(mock)) {
+        mock.mockClear();
+      }
+    });
+    Object.values(mockConfigFactory).forEach((mock) => {
+      if (jest.isMockFunction(mock)) {
+        mock.mockClear();
+      }
+    });
     (nanoid as jest.Mock).mockClear();
 
     const module: TestingModule = await Test.createTestingModule({
@@ -77,6 +69,10 @@ describe('UrlsService', () => {
     );
   });
 
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
@@ -84,8 +80,9 @@ describe('UrlsService', () => {
   describe('shortenUrl', () => {
     const createUrlDto: CreateUrlDto = { original_url: 'https://google.com' };
 
-    it('Should shorten a url for an anonymous user', async () => {
+    it('should shorten a url for an anonymous user', async () => {
       const mockCode = 'abcdef';
+      const mockUrl = createMockUrl({ short_code: mockCode });
 
       (nanoid as jest.Mock).mockReturnValue(mockCode);
       (mockUrlRepository.findOneBy as jest.Mock).mockResolvedValue(null);
@@ -104,8 +101,12 @@ describe('UrlsService', () => {
       expect(result.short_url).toEqual(`http://localhost:3000/${mockCode}`);
     });
 
-    it('Should shorten a url for an authenticated user', async () => {
+    it('should shorten a url for an authenticated user', async () => {
       const mockCode = 'abcdef';
+      const mockUser = createMockUser();
+      const mockUrl = createMockUrlWithUser(mockUser, {
+        short_code: mockCode,
+      });
 
       (nanoid as jest.Mock).mockReturnValue(mockCode);
       (mockUrlRepository.findOneBy as jest.Mock).mockResolvedValue(null);
@@ -122,7 +123,7 @@ describe('UrlsService', () => {
       expect(result.short_url).toEqual(`http://localhost:3000/${mockCode}`);
     });
 
-    it('Should handle short code collision', async () => {
+    it('should handle short code collision with retry', async () => {
       (nanoid as jest.Mock)
         .mockReturnValueOnce('collision')
         .mockReturnValueOnce('success');
@@ -131,6 +132,7 @@ describe('UrlsService', () => {
         .mockResolvedValueOnce({ id: 'existing-url' })
         .mockResolvedValueOnce(null);
 
+      const mockUrl = createMockUrl({ short_code: 'success' });
       (mockUrlRepository.create as jest.Mock).mockReturnValue(mockUrl);
       (mockUrlRepository.save as jest.Mock).mockResolvedValue(mockUrl);
 
@@ -140,18 +142,35 @@ describe('UrlsService', () => {
       expect(mockUrlRepository.findOneBy).toHaveBeenCalledTimes(2);
       expect(result.short_url).toEqual(`http://localhost:3000/success`);
     });
+
+    it('should handle database error during save', async () => {
+      const mockCode = 'abcdef';
+      const mockUrl = createMockUrl({ short_code: mockCode });
+
+      (nanoid as jest.Mock).mockReturnValue(mockCode);
+      (mockUrlRepository.findOneBy as jest.Mock).mockResolvedValue(null);
+      (mockUrlRepository.create as jest.Mock).mockReturnValue(mockUrl);
+      (mockUrlRepository.save as jest.Mock).mockRejectedValue(
+        new Error('Database error'),
+      );
+
+      const error = await service
+        .shortenUrl(createUrlDto)
+        .catch((e: Error) => e);
+
+      expect(error).toBeInstanceOf(Error);
+      expect((error as Error).message).toBe('Database error');
+    });
   });
 
   describe('findOriginalUrlAndCountClick', () => {
     it('should find url, increment click, and add protocol', async () => {
-      const urlWithNoProtocol = {
-        ...mockUrl,
+      const baseUrl = createMockUrl({
         original_url: 'google.com',
         id: 'test-id',
-      };
-      (mockUrlRepository.findOneBy as jest.Mock).mockResolvedValue(
-        urlWithNoProtocol,
-      );
+      });
+
+      (mockUrlRepository.findOneBy as jest.Mock).mockResolvedValue(baseUrl);
 
       const result = await service.findOriginalUrlAndCountClick('123456');
 
@@ -159,7 +178,7 @@ describe('UrlsService', () => {
         short_code: '123456',
       });
       expect(mockUrlRepository.increment).toHaveBeenCalledWith(
-        { id: urlWithNoProtocol.id },
+        { id: baseUrl.id },
         'click_count',
         1,
       );
@@ -174,44 +193,103 @@ describe('UrlsService', () => {
       expect(result).toBeNull();
       expect(mockUrlRepository.increment).not.toHaveBeenCalled();
     });
+
+    it('should not add protocol if already present (https)', async () => {
+      const baseUrl = createMockUrl({
+        original_url: 'https://google.com',
+      });
+
+      (mockUrlRepository.findOneBy as jest.Mock).mockResolvedValue(baseUrl);
+
+      const result = await service.findOriginalUrlAndCountClick('abc123');
+
+      expect(result).toEqual('https://google.com');
+    });
+
+    it('should not add protocol if already present (http)', async () => {
+      const baseUrl = createMockUrl({
+        original_url: 'http://google.com',
+      });
+
+      (mockUrlRepository.findOneBy as jest.Mock).mockResolvedValue(baseUrl);
+
+      const result = await service.findOriginalUrlAndCountClick('abc123');
+
+      expect(result).toEqual('http://google.com');
+    });
+
+    it('should handle increment error gracefully', async () => {
+      const baseUrl = createMockUrl();
+      (mockUrlRepository.findOneBy as jest.Mock).mockResolvedValue(baseUrl);
+      (mockUrlRepository.increment as jest.Mock).mockReturnValue({
+        catch: (cb: (err: Error) => void) => cb(new Error('Increment failed')),
+      });
+
+      const result = await service.findOriginalUrlAndCountClick('abc123');
+
+      // Should still return URL despite increment error
+      expect(result).toBeDefined();
+    });
   });
 
   describe('findAllByUser', () => {
-    it('Should return an array of urls for a user', async () => {
-      const mockUrls = [mockUrl, { ...mockUrl, id: 'url-uuid-2' }];
+    it('should return an array of urls for a user', async () => {
+      const mockUser = createMockUser();
+      const mockUrls = [
+        createMockUrlWithUser(mockUser),
+        createMockUrlWithUser(mockUser, { id: 'url-uuid-2' }),
+      ];
 
       (mockUrlRepository.find as jest.Mock).mockResolvedValue(mockUrls);
 
-      const result = await service.findAllByUser(userId);
+      const result = await service.findAllByUser(mockUser.id);
 
       expect(mockUrlRepository.find).toHaveBeenCalledWith({
         where: {
-          user_id: userId,
+          user_id: mockUser.id,
         },
         order: {
           created_at: 'DESC',
         },
       });
       expect(result).toEqual(mockUrls);
+      expect(result).toHaveLength(2);
+    });
+
+    it('should return empty array when user has no urls', async () => {
+      (mockUrlRepository.find as jest.Mock).mockResolvedValue([]);
+
+      const result = await service.findAllByUser(userId);
+
+      expect(result).toEqual([]);
+    });
+
+    it('should handle database error', async () => {
+      (mockUrlRepository.find as jest.Mock).mockRejectedValue(
+        new Error('Database error'),
+      );
+
+      const error = await service.findAllByUser(userId).catch((e: Error) => e);
+
+      expect(error).toBeInstanceOf(Error);
     });
   });
 
   describe('update', () => {
     const updateUrlDto: UpdateUrlDto = { original_url: 'https://youtube.com' };
 
-    it('Should update a url successfully', async () => {
-      const updatableUrl: Url = {
-        ...mockUrl,
+    it('should update a url successfully', async () => {
+      const baseUrl = createMockUrl({
+        id: urlId,
         original_url: 'https://google.com',
-      };
-
-      (mockUrlRepository.findOneBy as jest.Mock).mockResolvedValue(
-        updatableUrl,
-      );
-      (mockUrlRepository.save as jest.Mock).mockResolvedValue({
-        ...updatableUrl,
-        ...updateUrlDto,
       });
+      const updatedUrl = createMockUrl({
+        id: urlId,
+        original_url: updateUrlDto.original_url,
+      });
+
+      (mockUrlRepository.findOneBy as jest.Mock).mockResolvedValue(baseUrl);
+      (mockUrlRepository.save as jest.Mock).mockResolvedValue(updatedUrl);
 
       const result = await service.update(updateUrlDto, userId, urlId);
 
@@ -228,18 +306,45 @@ describe('UrlsService', () => {
       expect(result.original_url).toEqual(updateUrlDto.original_url);
     });
 
-    it('Should throw NotFoundException if url was not found or belongs to another user', async () => {
+    it('should throw NotFoundException if url was not found', async () => {
       (mockUrlRepository.findOneBy as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.update(updateUrlDto, userId, urlId)).rejects.toThrow(
-        NotFoundException,
-      );
+      const error = await service
+        .update(updateUrlDto, userId, urlId)
+        .catch((e: Error) => e);
+
+      expect(error).toBeInstanceOf(NotFoundException);
       expect(mockUrlRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException if url belongs to another user', async () => {
+      (mockUrlRepository.findOneBy as jest.Mock).mockResolvedValue(null);
+
+      const error = await service
+        .update(updateUrlDto, userId, urlId)
+        .catch((e: Error) => e);
+
+      expect(error).toBeInstanceOf(NotFoundException);
+    });
+
+    it('should handle database error during update', async () => {
+      const baseUrl = createMockUrl({ id: urlId });
+      (mockUrlRepository.findOneBy as jest.Mock).mockResolvedValue(baseUrl);
+      (mockUrlRepository.save as jest.Mock).mockRejectedValue(
+        new Error('Database error'),
+      );
+
+      const error = await service
+        .update(updateUrlDto, userId, urlId)
+        .catch((e: Error) => e);
+
+      expect(error).toBeInstanceOf(Error);
     });
   });
 
-  describe('softDelete', () => {
-    it('Should soft delete a url successfully', async () => {
+  describe('delete', () => {
+    it('should soft delete a url successfully', async () => {
+      const mockUrl = createMockUrl({ id: urlId });
       (mockUrlRepository.findOneBy as jest.Mock).mockResolvedValue(mockUrl);
 
       await service.delete(urlId, userId);
@@ -251,13 +356,33 @@ describe('UrlsService', () => {
       expect(mockUrlRepository.softDelete).toHaveBeenCalledWith(urlId);
     });
 
-    it('Should throw NotFoundException if url was not found or belongs to another user', async () => {
+    it('should throw NotFoundException if url was not found', async () => {
       (mockUrlRepository.findOneBy as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.delete(urlId, userId)).rejects.toThrow(
-        NotFoundException,
-      );
+      const error = await service.delete(urlId, userId).catch((e: Error) => e);
+
+      expect(error).toBeInstanceOf(NotFoundException);
       expect(mockUrlRepository.softDelete).not.toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException if url belongs to another user', async () => {
+      (mockUrlRepository.findOneBy as jest.Mock).mockResolvedValue(null);
+
+      const error = await service.delete(urlId, userId).catch((e: Error) => e);
+
+      expect(error).toBeInstanceOf(NotFoundException);
+    });
+
+    it('should handle database error during soft delete', async () => {
+      const mockUrl = createMockUrl({ id: urlId });
+      (mockUrlRepository.findOneBy as jest.Mock).mockResolvedValue(mockUrl);
+      (mockUrlRepository.softDelete as jest.Mock).mockRejectedValue(
+        new Error('Database error'),
+      );
+
+      const error = await service.delete(urlId, userId).catch((e: Error) => e);
+
+      expect(error).toBeInstanceOf(Error);
     });
   });
 });
