@@ -49,7 +49,7 @@ export class UrlsService {
     }
 
     throw new InternalServerErrorException(
-      'Failed to generate a short code after multiples tries. Try again in a moment',
+      'Failed to generate a short code after multiple tries. Try again in a moment',
     );
   }
 

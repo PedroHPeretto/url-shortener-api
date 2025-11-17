@@ -176,7 +176,7 @@ describe('UrlsService', () => {
         .catch((e: Error) => e);
 
       expect(error).toBeInstanceOf(BadRequestException);
-      expect((error as Error).message).toBe('URL fornecida é inválida');
+      expect((error as Error).message).toBe('Url provided is invalid');
       expect(mockUrlRepository.create).not.toHaveBeenCalled();
     });
 
@@ -192,7 +192,9 @@ describe('UrlsService', () => {
         .catch((e: Error) => e);
 
       expect(error).toBeInstanceOf(InternalServerErrorException);
-      expect((error as Error).message).toContain('Falha ao gerar código único');
+      expect((error as Error).message).toContain(
+        'Failed to generate a short code after multiple tries. Try again in a moment',
+      );
     });
   });
 

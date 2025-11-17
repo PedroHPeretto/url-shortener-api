@@ -84,7 +84,7 @@ describe('UsersService', () => {
       const error = await service.create(createUserDto).catch((e: Error) => e);
 
       expect(error).toBeInstanceOf(ConflictException);
-      expect((error as Error).message).toBe('Email já está registrado');
+      expect((error as Error).message).toBe('Email provided already in use');
       expect(mockUserRepository.create).not.toHaveBeenCalled();
     });
 
@@ -205,7 +205,9 @@ describe('UsersService', () => {
         .catch((e: Error) => e);
 
       expect(error).toBeInstanceOf(NotFoundException);
-      expect((error as Error).message).toContain('não encontrado');
+      expect((error as Error).message).toContain(
+        'User: nonexistent-id not found',
+      );
     });
 
     it('should handle password hash error', async () => {
@@ -221,7 +223,7 @@ describe('UsersService', () => {
         .catch((e: Error) => e);
 
       expect(error).toBeInstanceOf(InternalServerErrorException);
-      expect((error as Error).message).toBe('Falha ao processar senha');
+      expect((error as Error).message).toBe('Failed to process password');
     });
 
     it('should not hash password if not provided in update', async () => {
@@ -264,7 +266,7 @@ describe('UsersService', () => {
       const error = await service.remove(userId).catch((e: Error) => e);
 
       expect(error).toBeInstanceOf(NotFoundException);
-      expect((error as Error).message).toBe('Usuário não encontrado');
+      expect((error as Error).message).toBe('User not found');
     });
 
     it('should handle softDelete database error', async () => {

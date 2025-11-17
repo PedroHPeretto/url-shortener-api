@@ -59,7 +59,7 @@ export class UsersService {
         );
       } catch {
         this.logger.error(`Failed to update user information`);
-        throw new InternalServerErrorException('Failed to proccess password');
+        throw new InternalServerErrorException('Failed to process password');
       }
     }
 
