@@ -34,6 +34,7 @@ Este projeto foi desenvolvido como parte de um teste técnico para um processo s
     * Logs estruturados para observabilidade.
     * CI (GitHub Actions) configurado para Lint e Testes.
     * Versionamento semântico automatizado (Standard Version).
+    * Deploy na AWS e API disponível publicamente.
 
 ---
 
@@ -80,11 +81,7 @@ $ npm run start:prod
 
 #construa a versão para produção
 $ npm run build
-```
 
-## Testes
-
-```bash
 # testes unitários
 $ npm run test
 
@@ -101,6 +98,13 @@ A documentação interativa completa de todos os endpoints está disponível em:
 **[http://localhost:3000/api-docs](http://localhost:3000/api-docs)**
 
 Lá você pode testar as requisições, ver os esquemas de dados (DTOs) e as respostas de erro padronizadas.
+
+---
+
+## Demo online
+
+A API está hospedada na AWS e pode ser testada agora mesmo em:
+**[http://18.218.236.230:3000](http://18.218.236.230:3000)**
 
 ---
 
