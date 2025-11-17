@@ -19,4 +19,4 @@ RUN npm ci --only=production --ignore-scripts
 
 COPY --from=builder /usr/src/app/dist ./dist
 
-CMD ["node", "dist/src/main.js"]
+CMD ["node", "dist/main.js"]
