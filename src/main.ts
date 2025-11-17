@@ -34,9 +34,9 @@ async function bootstrap() {
   const port = process.env.PORT ?? 3000;
   await app.listen(port);
 
-  logger.log(`Aplicação iniciada na porta ${port}`);
+  logger.log(`API on live! port: ${port}`);
 }
 bootstrap().catch((err) => {
-  logger.error('Erro ao iniciar aplicação:', err);
+  logger.error('Failed to initialize API:', err);
   process.exit(1);
 });
