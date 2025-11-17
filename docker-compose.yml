@@ -15,7 +15,7 @@ services:
     networks:
       - url_shortener_net
     environment:
-      - DB_HOST=d${DB_HOST}
+      - DB_HOST=${DB_HOST}
       - DB_TYPE=postgres
       - DB_PORT=${DB_PORT}
       - DB_USER=${DB_USER}
