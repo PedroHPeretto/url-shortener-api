@@ -1,98 +1,126 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# 🔗 URL Shortener API (Encurtador de URL)
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+>API REST robusta e escalável para encurtamento de URLs, desenvolvida com **Node.js (NestJS)** e **PostgreSQL**. O projeto oferece funcionalidades de encurtamento público, redirecionamento com contagem de cliques e gerenciamento de links para usuários autenticados.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+Este projeto foi desenvolvido como parte de um teste técnico para um processo seletivo.
 
-## Description
+## Tecnologias & Ferramentas
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+* **Linguagem:** [TypeScript](https://www.typescriptlang.org/)
+* **Framework:** [NestJS](https://nestjs.com/) ([Node.js](https://nodejs.org/pt))
+* **Banco de Dados:** [PostgreSQL](https://www.postgresql.org/) (via [TypeORM](https://typeorm.io/))
+* **Containerização:** [Docker](https://www.docker.com/) & [Docker Compose](https://docs.docker.com/compose/)
+* **Autenticação:** [JWT (JSON Web Token)](https://www.jwt.io/) & [Passport](https://docs.nestjs.com/recipes/passport)
+* **Testes:** [Jest](https://jestjs.io/) (Unitários e Cobertura)
+* **Qualidade de Código:** [ESLint](https://eslint.org/), [Prettier](https://prettier.io/), [Husky](https://www.npmjs.com/package/husky), [Commitlint](https://commitlint.js.org/)
+* **Documentação:** [Swagger](https://swagger.io/) ([OpenAPI](https://www.openapis.org/))
 
-## Project setup
+## Funcionalidades
+
+* **Público:**
+    * Encurtar URLs (gera um hash único de 6 caracteres).
+    * Redirecionar para URL original (contabilizando cliques).
+* **Privado (Autenticado):**
+    * Cadastro e Login de usuários (JWT).
+    * Listagem de URLs encurtadas pelo usuário (com contador de acessos).
+    * Edição de URL de destino.
+    * Exclusão lógica (Soft Delete) de URLs.
+* **Diferenciais Implementados:**
+    * Ambiente 100% containerizado com Docker.
+    * Testes Unitários cobrindo 100% dos Services críticos.
+    * Documentação automática com Swagger.
+    * Validação rigorosa de dados (DTOs + Pipes Globais).
+    * Padronização de Erros (Global Exception Filter).
+    * Logs estruturados para observabilidade.
+    * CI (GitHub Actions) configurado para Lint e Testes.
+    * Versionamento semântico automatizado (Standard Version).
+
+---
+
+## Como Rodar o Projeto
+
+### Pré-requisitos
+* **Docker** e **Docker Compose** instalados.
+
+### Passo a Passo (Recomendado)
+
+1.  **Clone o repositório:**
+    ```bash
+    git clone [https://github.com/](https://github.com/)[SEU-USUARIO]/[SEU-REPO].git
+    cd [NOME-DA-PASTA]
+    ```
+
+2.  **Suba o ambiente com Docker:**
+    Este comando irá construir a imagem da aplicação e subir o banco de dados PostgreSQL automaticamente.
+    ```bash
+    make build
+    ```
+
+3.  **Acesse a API:**
+    A aplicação estará rodando em: `http://localhost:3000`
+
+---
+
+## Outros comandos
 
 ```bash
-$ npm install
-```
-
-## Compile and run the project
-
-```bash
-# development
+# desenvolvimento
 $ npm run start
 
-# watch mode
+# modo assistido
 $ npm run start:dev
 
-# production mode
+# modo de produção
 $ npm run start:prod
+
+#construa a versão para produção
+$ npm run build
 ```
 
 ## Run tests
 
 ```bash
-# unit tests
+# testes unitários
 $ npm run test
 
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
+# cobertura de testes
 $ npm run test:cov
 ```
 
-## Deployment
+---
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+## Documentação da API (Swagger)
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+A documentação interativa completa de todos os endpoints está disponível em:
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+**[http://localhost:3000/api-docs](http://localhost:3000/api-docs)**
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Lá você pode testar as requisições, ver os esquemas de dados (DTOs) e as respostas de erro padronizadas.
 
-## Resources
+---
 
-Check out a few resources that may come in handy when working with NestJS:
+## Escalabilidade e Melhorias Futuras
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+Este sistema foi desenhado inicialmente para escalar verticalmente (adicionando recursos à máquina atual). No entanto, para suportar um volume massivo de acessos (milhões de cliques/dia) e escalar **horizontalmente** (várias instâncias da API), os seguintes desafios e melhorias foram identificados:
 
-## Support
+### 1. Geração de Hash Distribuída (Colisões)
+* **Desafio:** Com múltiplas instâncias gerando hashes aleatórios (`nanoid`) simultaneamente, a chance de colisão aumenta, e a verificação no banco (`findOne`) se torna um gargalo de performance.
+* **Solução:** Implementar um serviço de geração de IDs pré-alocados (como o Twitter Snowflake) ou um *Key Generation Service* (KGS) separado, que fornece chaves únicas garantidas para as instâncias da API, eliminando a necessidade de verificar o banco na criação, assim reduzindo o número de consultas drasticamente.
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+### 2. Contagem de Cliques (Escrita Excessiva)
+* **Desafio:** Cada redirecionamento gera um `UPDATE` síncrono no banco de dados. Em alta carga, isso pode travar o banco ("Database Locking").
+* **Solução:** Utilizar uma estratégia de **"Write-Behind"** com **Redis**. O clique apenas incrementa um contador no Redis (operação extremamente rápida em memória). Um *worker* assíncrono coleta esses dados periodicamente e atualiza o banco PostgreSQL em lote (*batch update*).
 
-## Stay in touch
+### 3. Cache de Redirecionamento
+* **Melhoria:** URLs populares são acessadas frequentemente. Consultar o Postgres a cada clique é ineficiente.
+* **Solução:** Cachear o mapeamento `short_code -> original_url` no **Redis**. A aplicação consulta primeiro o Redis; se não achar, busca no banco e salva no cache.
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+### 4. Banco de Dados (Leitura vs. Escrita)
+* **Melhoria:** Separar a infraestrutura de banco de dados.
+* **Solução:** Criar **Réplicas de Leitura** para os redirecionamentos (GET) e manter a instância Principal apenas para criação de links e contabilização (escrita).
 
-## License
+---
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+## Licença
+
+Este projeto está sob a licença [MIT](https://github.com/nestjs/nest/blob/master/LICENSE).
