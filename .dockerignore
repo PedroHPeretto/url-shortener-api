@@ -1,9 +1,11 @@
 .gitignore
 .git
-
 node_modules
 dist
 *.log
 *.md
-
-test
+test/
+makefile
+*.md
+commitlint.config.ts
+eslint.config.mjs
