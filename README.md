@@ -46,7 +46,7 @@ Este projeto foi desenvolvido como parte de um teste técnico para um processo s
 
 1.  **Clone o repositório:**
     ```bash
-    git clone [https://github.com/](https://github.com/)[SEU-USUARIO]/[SEU-REPO].git
+    git clone https://github.com/PedroHPeretto/url-shortener-api.git
     cd [NOME-DA-PASTA]
     ```
 
