@@ -82,7 +82,7 @@ $ npm run start:prod
 $ npm run build
 ```
 
-## Run tests
+## Testes
 
 ```bash
 # testes unitários
