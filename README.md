@@ -50,13 +50,18 @@ Este projeto foi desenvolvido como parte de um teste técnico para um processo s
     cd [NOME-DA-PASTA]
     ```
 
-2.  **Suba o ambiente com Docker:**
+2.  **Configure as variáveis de ambiente**
+    ```bash
+    cp .env.example .env
+    ```
+
+3.  **Suba o ambiente com Docker:**
     Este comando irá construir a imagem da aplicação e subir o banco de dados PostgreSQL automaticamente.
     ```bash
     make build
     ```
 
-3.  **Acesse a API:**
+4.  **Acesse a API:**
     A aplicação estará rodando em: `http://localhost:3000`
 
 ---

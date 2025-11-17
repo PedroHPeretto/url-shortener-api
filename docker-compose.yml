@@ -15,14 +15,14 @@ services:
     networks:
       - url_shortener_net
     environment:
-      - DB_HOST=db
+      - DB_HOST=d${DB_HOST}
       - DB_TYPE=postgres
-      - DB_PORT=5432
-      - DB_USER=postgres
-      - DB_PASSWORD=admin
-      - DB_NAME=shortener
-      - JWT_SECRET=uh8wjsd990nsha
-      - BASE_URL=http://localhost:3000/
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - JWT_SECRET=${JWT_SECRET}
+      - BASE_URL=${BASE_URL}
 
   db:
     container_name: database_postgres
@@ -30,11 +30,11 @@ services:
     networks:
       - url_shortener_net
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=admin
-      - POSTGRES_DB=shortener
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
     ports:
-      - "5432:5432"
+      - "${DB_PORT}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
 
