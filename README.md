@@ -32,7 +32,7 @@ Este projeto foi desenvolvido como parte de um teste técnico para um processo s
     * Validação rigorosa de dados (DTOs + Pipes Globais).
     * Padronização de Erros (Global Exception Filter).
     * Logs estruturados para observabilidade.
-    * CI (GitHub Actions) configurado para Lint e Testes.
+    * CI/CD (GitHub Actions) configurado para Lint, Testes e Deploy.
     * Versionamento semântico automatizado (Standard Version).
     * Deploy na AWS e API disponível publicamente.
 
@@ -95,7 +95,7 @@ $ npm run test:cov
 
 A documentação interativa completa de todos os endpoints está disponível em:
 
-**[http://localhost:3000/api-docs](http://localhost:3000/api-docs)**
+**[http://localhost:3000/api-docs](http://localhost:3000/api-docs)** ou **[http://18.118.143.32:3000/api-docs](http://18.118.143.32:3000/api-docs)**
 
 Lá você pode testar as requisições, ver os esquemas de dados (DTOs) e as respostas de erro padronizadas.
 
@@ -104,7 +104,7 @@ Lá você pode testar as requisições, ver os esquemas de dados (DTOs) e as res
 ## Demo online
 
 A API está hospedada na AWS e pode ser testada agora mesmo em:
-**[http://18.218.236.230:3000](http://18.218.236.230:3000)**
+**[http://18.118.143.32:3000](http://18.118.143.32:3000)**
 
 ---
 
