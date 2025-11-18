@@ -65,9 +65,7 @@ export class UrlsController {
   }
 
   @Redirect()
-  @HttpCode(HttpStatus.FOUND)
   @Get(':short_code')
-  @UseInterceptors(ClassSerializerInterceptor)
   @ApiOperation({
     summary: 'Redirect to original url based on short code',
   })
@@ -92,7 +90,7 @@ export class UrlsController {
       await this.urlsService.findOriginalUrlAndCountClick(short_code);
 
     this.logger.log(`User redirected to ${originalUrl}`);
-    return plainToInstance(UrlRedirectResponse, originalUrl);
+    return new UrlRedirectResponse(originalUrl);
   }
 
   @UseGuards(JwtAuthGuard)

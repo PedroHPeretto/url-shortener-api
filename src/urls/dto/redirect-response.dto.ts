@@ -1,9 +1,19 @@
-import { Expose, Exclude } from 'class-transformer';
+import { Expose, Exclude, Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
 @Exclude()
 export class UrlRedirectResponse {
-  @ApiProperty({ example: 'https://google.com', description: 'Original url' })
+  @ApiProperty({
+    example: 'https://google.com',
+    description: 'Original url',
+  })
   @Expose()
-  original_url: string;
+  @Transform(({ value }: { value: string | null }) => value, {
+    toClassOnly: true,
+  })
+  url: string | null;
+
+  constructor(url: string | null) {
+    this.url = url;
+  }
 }
