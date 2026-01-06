@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: url-shortener-api
+spec:
+  selector:
+    matchLabels:
+      app: url-shortener-app
+  template:
+    metadata:
+      labels:
+        app: url-shortener-app
+    spec:
+      containers:
+      - name: url-shortener-container
+        envFrom:
+          - configMapRef:
+              name: url-shortener-config
+          - secretRef:
+              name: url-shortener-secrets
+        image: pedroperetto/url-shortener-api:v2
+        lifecycle:
+          preStop:
+            exec:
+              command: ['sh', '-c', 'sleep 5']
+        ports:
+        - containerPort: 3000
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          failureThreshold: 2
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          failureThreshold: 2
+        resources:
+          requests:
+            cpu: '100m'
+            memory: '256Mi'
+          limits:
+            cpu: '300m'
+            memory: '512Mi'
+
+#Otimizar Resources

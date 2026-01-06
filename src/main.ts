@@ -11,6 +11,8 @@ async function bootstrap() {
     logger: logger,
   });
 
+  app.enableShutdownHooks();
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

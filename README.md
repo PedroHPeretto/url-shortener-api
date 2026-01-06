@@ -1,5 +1,18 @@
 # 🔗 URL Shortener API (Encurtador de URL)
 
+## Sumário
+
+* [Descrição](#descrição)
+* [Tecnologias & Ferramentas](#tecnologias--ferramentas)
+* [Funcionalidades](#funcionalidades)
+* [Como rodar o projeto](#como-rodar-o-projeto)
+* [Outros comandos](#outros-comandos)
+* [Documentação da API](#documentação-da-api-swagger)
+* [Escalabilidade e melhorias futuras](#escalabilidade-e-melhorias-futuras)
+* [Licença](#licença)
+
+## Descrição
+
 >API REST robusta e escalável para encurtamento de URLs, desenvolvida com **Node.js (NestJS)** e **PostgreSQL**. O projeto oferece funcionalidades de encurtamento público, redirecionamento com contagem de cliques e gerenciamento de links para usuários autenticados.
 
 Este projeto foi desenvolvido como parte de um teste técnico para um processo seletivo.
@@ -10,6 +23,7 @@ Este projeto foi desenvolvido como parte de um teste técnico para um processo s
 * **Framework:** [NestJS](https://nestjs.com/) ([Node.js](https://nodejs.org/pt))
 * **Banco de Dados:** [PostgreSQL](https://www.postgresql.org/) (via [TypeORM](https://typeorm.io/))
 * **Containerização:** [Docker](https://www.docker.com/) & [Docker Compose](https://docs.docker.com/compose/)
+* **Orquestração:** [Kubernetes](https://kubernetes.io/pt-br/)
 * **Autenticação:** [JWT (JSON Web Token)](https://www.jwt.io/) & [Passport](https://docs.nestjs.com/recipes/passport)
 * **Testes:** [Jest](https://jestjs.io/) (Unitários e Cobertura)
 * **Qualidade de Código:** [ESLint](https://eslint.org/), [Prettier](https://prettier.io/), [Husky](https://www.npmjs.com/package/husky), [Commitlint](https://commitlint.js.org/)
@@ -25,8 +39,9 @@ Este projeto foi desenvolvido como parte de um teste técnico para um processo s
     * Listagem de URLs encurtadas pelo usuário (com contador de acessos).
     * Edição de URL de destino.
     * Exclusão lógica (Soft Delete) de URLs.
-* **Diferenciais Implementados:**
+* **Outros:**
     * Ambiente 100% containerizado com Docker.
+    * API pronta para orquestração com Kubernetes.
     * Testes Unitários cobrindo 100% dos Services críticos.
     * Documentação automática com Swagger.
     * Validação rigorosa de dados (DTOs + Pipes Globais).
@@ -34,7 +49,7 @@ Este projeto foi desenvolvido como parte de um teste técnico para um processo s
     * Logs estruturados para observabilidade.
     * CI/CD (GitHub Actions) configurado para Lint, Testes e Deploy.
     * Versionamento semântico automatizado (Standard Version).
-    * Deploy na AWS e API disponível publicamente.
+    * Deploy na AWS.
 
 ---
 
@@ -48,7 +63,7 @@ Este projeto foi desenvolvido como parte de um teste técnico para um processo s
 1.  **Clone o repositório:**
     ```bash
     git clone https://github.com/PedroHPeretto/url-shortener-api.git
-    cd [NOME-DA-PASTA]
+    cd url-shortener-api
     ```
 
 2.  **Configure as variáveis de ambiente**
@@ -95,16 +110,9 @@ $ npm run test:cov
 
 A documentação interativa completa de todos os endpoints está disponível em:
 
-**[http://localhost:3000/api-docs](http://localhost:3000/api-docs)** ou **[http://18.118.143.32:3000/api-docs](http://18.118.143.32:3000/api-docs)**
+**[http://localhost:3000/api-docs](http://localhost:3000/api-docs)**
 
 Lá você pode testar as requisições, ver os esquemas de dados (DTOs) e as respostas de erro padronizadas.
-
----
-
-## Demo online
-
-A API está hospedada na AWS e pode ser testada agora mesmo em:
-**[http://18.118.143.32:3000](http://18.118.143.32:3000)**
 
 ---
 
