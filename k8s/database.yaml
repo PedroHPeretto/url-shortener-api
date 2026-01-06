@@ -25,14 +25,14 @@ spec:
         app: database
     spec:
       containers:
-      - name: database_postgres
+      - name: database-postgres
         image: postgres:15-alpine
         ports:
         - containerPort: 5432
         env:
         - name: POSTGRES_USER
           valueFrom:
-            configMapRef:
+            configMapKeyRef:
               name: url-shortener-config
               key: DB_USER
         - name: POSTGRES_PASSWORD
@@ -42,7 +42,7 @@ spec:
               key: DB_PASSWORD
         - name: POSTGRES_DB
           valueFrom:
-            configMapRef:
+            configMapKeyRef:
               name: url-shortener-config
               key: DB_NAME
         volumeMounts:
