@@ -65,7 +65,7 @@ export class UrlsController {
   }
 
   @Redirect()
-  @Get(':short_code')
+  @Get('redirect/:short_code')
   @ApiOperation({
     summary: 'Redirect to original url based on short code',
   })
