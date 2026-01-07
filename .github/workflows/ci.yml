@@ -8,12 +8,14 @@ on:
 
 jobs:
   build:
+    name: Build & Check Code
     runs-on: ubuntu-latest
     strategy:
       matrix:
         node-version: [ 22.x ]
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v3
       
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3

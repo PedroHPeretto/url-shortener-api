@@ -18,7 +18,7 @@ spec:
               name: url-shortener-config
           - secretRef:
               name: url-shortener-secrets
-        image: pedroperetto/url-shortener-api:v2
+        image: pedroperetto/url-shortener-api:latest
         lifecycle:
           preStop:
             exec:
