@@ -19,6 +19,9 @@ spec:
           - secretRef:
               name: url-shortener-secrets
         image: pedroperetto/url-shortener-api:latest
+        imagePullPolicy: Always
+        command: ['bin/sh']
+        args: ['-c', 'sleep 3600']
         lifecycle:
           preStop:
             exec:
